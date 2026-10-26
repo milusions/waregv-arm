@@ -3,6 +3,8 @@
 A desktop app to control a 3-joint robot arm. Click on the plot, and the arm moves there.
 It works in **Offline** mode (simulation only) or **Online** mode (moves the real servos).
 
+![App Thumbnail](assets/thumbnail.png)
+
 ## How it works
 
 ```
