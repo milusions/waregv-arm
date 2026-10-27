@@ -26,7 +26,7 @@ function joint_angles = inverse_kinematics(dh_table, target_pose, elbow_up, x_mi
     % Step 2: Solve for theta2
     D = (xw^2 + yw^2 - L1^2 - L2^2) / (2 * L1 * L2);
     if abs(D) > 1
-        error('Target is out of reach.');
+        error('Target is out of reach for (%f,%f,%f)',x,y,phi);
     end
 
     sin_theta2 = sqrt(1 - D^2);

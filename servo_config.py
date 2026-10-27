@@ -1,7 +1,8 @@
 """Shared settings for limit_setter.py, move_to_angle.py (library) and app.py."""
 import os
 
-PORT = os.environ.get("ST3215_PORT", "/dev/ttyACM0")
+# PORT = os.environ.get("ST3215_PORT", "/dev/ttyACM0")
+PORT = os.environ.get("ST3215_PORT", "COM3")
 SERVO_IDS = [1, 2, 3, 4]
 
 # How each motor is mounted.

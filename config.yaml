@@ -11,3 +11,5 @@ animation:
 initial_target:
   x: 300.0
   y: 0.0
+matlab_script_dir: matlab
+algorithm_source: MATLAB # use "MATLAB" for external algortihing, use "INBUILT" for local calculations

@@ -11,6 +11,8 @@ DEFAULT_CONFIG = {
     'hardware': {'enabled': True, 'fps': 30},
     'waypoint_dwell_s': 0.0,
     'waypoints': [],
+        "matlab_script_dir": "matlab",
+"algorithm_source": "INBUILT"
 }
 
 

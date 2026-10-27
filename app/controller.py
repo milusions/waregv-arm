@@ -1,12 +1,13 @@
 """UI Glue: Handles widget signals and syncs with HardwareLink."""
 import math
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QApplication
 from PyQt5.QtCore import Qt, QTimer
 
 from config_manager import load_config
 from app.arm_widget import ArmPlotWidget
 from app.controls_widget import ControlsWidget
+from app.loading_overlay import LoadingOverlay
 from hardware_link import HardwareLink
 
 UI_INTERVAL_MS = 33  # ~30 FPS
@@ -37,6 +38,9 @@ class ArmControllerWindow(QMainWindow):
         self._last_trace_len = -1
         self._last_hist_len = -1
         self._last_track = None
+
+        self._ik_pending = False
+        self._overlay_mode = None
 
         self.hw.set_offline()
         self._build_ui()
@@ -95,6 +99,24 @@ class ArmControllerWindow(QMainWindow):
         c.autoPhiToggled.connect(self.on_auto_phi_toggle)
         c.trackPathToggled.connect(self.on_track_toggle)
 
+        self.overlay = LoadingOverlay(central)
+        self.overlay.setGeometry(central.rect())
+        self.overlay.raise_()
+
+    # ------------------------------------------------------------------
+    # Overlay helpers
+    # ------------------------------------------------------------------
+    def _show_loader(self, message, mode='dim'):
+        self._overlay_mode = mode
+        self.overlay.start(message, mode=mode)
+        # Instantly process the paint event for the loader BEFORE 
+        # we start doing blocking math.
+        QApplication.processEvents()
+
+    def _hide_loader(self):
+        self._overlay_mode = None
+        self.overlay.stop()
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
@@ -123,6 +145,16 @@ class ArmControllerWindow(QMainWindow):
         st = self.hw.get_state()
         self.hw.check_health()
         dirty = False
+
+        # Overlay control based on hardware state
+        if not self._ik_pending:
+            moving = bool(st.get('is_moving', False))
+            if moving:
+                if self._overlay_mode != 'dim':
+                    self._show_loader("Arm moving...", mode='dim')
+            else:
+                if self._overlay_mode == 'dim':
+                    self._hide_loader()
 
         if st['status'] != self._last_status:
             self._last_status = st['status']
@@ -173,14 +205,21 @@ class ArmControllerWindow(QMainWindow):
 
         self.plot.set_plot_limits(xlim, ylim)
         self.plot.set_target_angles(None, None, None, valid=False)
-        self.plot.redraw_waypoints(self.waypoints, draw=False)  # setup_plot cleared artists
+        self.plot.redraw_waypoints(self.waypoints, draw=False)
         self._last_trace_len = -1
 
-        if self._apply_feasible_config():
-            self.update_target_display()
-        else:
-            self.plot.target_point.set_color('gray')
-            self.lbl_status.setText("Target violates new constraints!")
+        # Block execution but force render first
+        self._ik_pending = True
+        self._show_loader("Solving inverse kinematics...", mode='blur')
+        try:
+            if self._apply_feasible_config():
+                self.update_target_display()
+            else:
+                self.plot.target_point.set_color('gray')
+                self.lbl_status.setText("Target violates new constraints!")
+        finally:
+            self._ik_pending = False
+            self._hide_loader()
 
     def on_phi_dial(self, val):
         self.target_phi = math.radians(val)
@@ -209,27 +248,35 @@ class ArmControllerWindow(QMainWindow):
         if not checked:
             self.plot.set_trace([])
 
+    # ------------------------------------------------------------------
     def on_click(self, event):
         if event.inaxes != self.plot.ax or self.hw.state['is_moving']:
             return
+            
         x, y = event.xdata, event.ydata
 
-        if self._apply_feasible_config(x, y):
-            self.target_x, self.target_y = x, y
-            self.target_valid = True
-            self.update_target_display()
-            solved = self.hw.arm.inverse_kinematics(
-                x, y, self.target_phi, self.target_elbow_up)
-            self.plot.draw_ghost_arm(*solved)
-            self.plot.show_ghost_target(x, y)
-        else:
-            self.plot.set_target_marker(x, y, valid=False)
-            self.plot.ghost_arm_line.set_data([], [])
-            self.plot.set_target_angles(None, None, None, valid=False)
-            self.target_valid = False
-            self.lbl_status.setText("Unreachable target.")
-
-        self.plot.canvas.draw_idle()
+        # Block execution but force render first
+        self._ik_pending = True
+        self._show_loader("Solving inverse kinematics...", mode='blur')
+        try:
+            if self._apply_feasible_config(x, y):
+                self.target_x, self.target_y = x, y
+                self.target_valid = True
+                self.update_target_display()
+                solved = self.hw.arm.inverse_kinematics(
+                    x, y, self.target_phi, self.target_elbow_up)
+                self.plot.draw_ghost_arm(*solved)
+                self.plot.show_ghost_target(x, y)
+            else:
+                self.plot.set_target_marker(x, y, valid=False)
+                self.plot.ghost_arm_line.set_data([], [])
+                self.plot.set_target_angles(None, None, None, valid=False)
+                self.target_valid = False
+                self.lbl_status.setText("Unreachable target.")
+        finally:
+            self._ik_pending = False
+            self._hide_loader()
+            self.plot.canvas.draw_idle()
 
     def update_target_display(self):
         self.target_valid = True

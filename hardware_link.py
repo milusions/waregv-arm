@@ -20,7 +20,8 @@ import threading
 import time
 from bisect import bisect_left
 
-from kinematics import Planar3DOFArm
+from kinematics import Planar3DOFArm as Planar3DOFArm 
+from kinematics_matlab import Planar3DOFArm as Planar3DOFArmMATLAB
 
 try:
     from move_to_angle import ServoArm
@@ -46,8 +47,20 @@ class HardwareLink:
     # ------------------------------------------------------------------
     def __init__(self, config):
         p, c, a = config['arm_parameters'], config['constraints'], config['animation']
-        self.arm = Planar3DOFArm(l1=p['L1'], l2=p['L2'], l3=p['L3'],
-                                 x_min=c['min_x'], y_min=c['min_y'])
+        matlab_script_dir = config['matlab_script_dir']
+     
+        algorithm_source = config["algorithm_source"]
+        if algorithm_source == "MATLAB":
+         self.arm = Planar3DOFArmMATLAB(l1=p['L1'], l2=p['L2'], l3=p['L3'],
+                                 x_min=c['min_x'], y_min=c['min_y'], script_dir=matlab_script_dir)
+        elif algorithm_source == "INBUILT":
+              self.arm = Planar3DOFArm(l1=p['L1'], l2=p['L2'], l3=p['L3'],
+                                             x_min=c['min_x'], y_min=c['min_y'])
+      
+        else:
+            self.arm = Planar3DOFArm(l1=p['L1'], l2=p['L2'], l3=p['L3'],
+                                             x_min=c['min_x'], y_min=c['min_y'])
+            
         self.bezier_weight = a['bezier_weight']
         self.duration_s = a['duration_s']
         self.hw_enabled = config.get('hardware', {}).get('enabled', True)
