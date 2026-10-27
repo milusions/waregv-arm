@@ -60,6 +60,7 @@ It works in **Offline** mode (simulation only) or **Online** mode (moves the rea
 - **Track:** shows the path the tip has drawn.
 - **Bezier W / Duration:** how smooth and how long each move takes.
 
+**NOTE**: Windows with MATLAB installed required if algorithm_source set to MATLAB
 ## Tips
 
 - Run **offline first** to test paths safely.
