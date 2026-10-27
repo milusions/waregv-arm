@@ -1,9 +1,16 @@
-# Robotic Arm Controller
+# WareGV Arm Control Panel
 
 A desktop app to control a 3-joint robot arm. Click on the plot, and the arm moves there.
 It works in **Offline** mode (simulation only) or **Online** mode (moves the real servos).
 
 ![App Thumbnail](assets/thumbnail.png)
+
+
+## Kinematics
+![Kinematics](assets/kinematics.png)
+
+## Inverse Kinematics
+![Inverse Kinematics](assets/inverse_kinematics.png)
 
 ## How it works
 

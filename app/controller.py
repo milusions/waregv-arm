@@ -16,7 +16,7 @@ UI_INTERVAL_MS = 33  # ~30 FPS
 class ArmControllerWindow(QMainWindow):
     def __init__(self, config_file="config.yaml"):
         super().__init__()
-        self.setWindowTitle("WareGV Arm Controller")
+        self.setWindowTitle("WareGV Arm Control Panel")
         self.resize(1280, 860)
 
         self.config_data = load_config(config_file)
