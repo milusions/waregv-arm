@@ -6,10 +6,10 @@ constraints:
   min_x: 0.0
   min_y: -148.0
 animation:
-  duration_s: 1.0
+  duration_s: 2.0
   bezier_weight: 10.0
 initial_target:
   x: 300.0
   y: 0.0
 matlab_script_dir: matlab
-algorithm_source: MATLAB # use "MATLAB" for external algortihing, use "INBUILT" for local calculations
+algorithm_source: INBUILT # use "MATLAB" for external algortihing, use "INBUILT" for local calculations
