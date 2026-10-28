@@ -6,7 +6,7 @@ constraints:
   min_x: 0.0
   min_y: -148.0
 animation:
-  duration_s: 2.0
+  duration_s: 5.0
   bezier_weight: 10.0
 initial_target:
   x: 300.0
